@@ -61,21 +61,27 @@ export default function SocketHandler(
   req: NextApiRequest,
   res: NextApiResponse & {
     socket: {
-      server: ServerOptions & {
-        io: Server
+      server: any & {
+        io?: Server
       }
     }
   },
 ): void {
-  // It means that socket server was already initialized
   if (res?.socket?.server?.io) {
-    console.log(`Already set up`)
+    console.log(`Socket server already initialized`)
     res.end()
     return
   }
 
   const io = new Server<SocketClientToServer, SocketServerToClient>(
     res?.socket?.server,
+    {
+      path: '/api/socketio',
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+      }
+    }
   )
   res.socket.server.io = io
 
