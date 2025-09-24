@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { useEffect } from 'react'
 
 import { toast } from 'react-toastify'
@@ -62,21 +63,30 @@ export const useSockets = ({ reset }: { reset: VoidFunction }): void => {
 
   const socketInitializer = async () => {
     try {
-      await fetch(`/api/socket`)
-      socket = io({
-        path: '/api/socketio',
-        transports: ['websocket', 'polling']
+      const response = await fetch(`/api/socket`)
+      if (!response.ok) {
+        throw new Error(`Failed to initialize socket server: ${response.status}`)
+      }
+      socket = io(`/`, {
+        transports: [`polling`],
+        upgrade: false,
+        timeout: 20000,
+        forceNew: true,
+        reconnection: true,
+        reconnectionDelayMax: 5000,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
       })
       setSocket(socket)
 
-      socket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error)
-        toast.error('Connection failed. Please refresh the page.')
+      socket.on(`connect_error`, (error) => {
+        console.error(`Socket connection error:`, error)
+        toast.error(`Connection failed. Please refresh the page.`)
       })
 
-      socket.on('disconnect', (reason) => {
-        console.log('Socket disconnected:', reason)
-        if (reason === 'io server disconnect') {
+      socket.on(`disconnect`, (reason) => {
+        console.log(`Socket disconnected:`, reason)
+        if (reason === `io server disconnect`) {
           socket.connect()
         }
       })
@@ -139,8 +149,8 @@ export const useSockets = ({ reset }: { reset: VoidFunction }): void => {
         })
       })
     } catch (error) {
-      console.error('Failed to initialize socket:', error)
-      toast.error('Failed to connect to server')
+      console.error(`Failed to initialize socket:`, error)
+      toast.error(`Failed to connect to server`)
     }
   }
 }
